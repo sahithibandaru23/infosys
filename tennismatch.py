@@ -30,8 +30,8 @@ st.sidebar.info("""
 """)
 
 # Main app interface
-st.title("🎾 Tennis Tracking 🎾")
-st.markdown("#### Detect and track players in your tennis videos.")
+st.title("🎾 TENNIS TRACKING 🎾")
+st.markdown("#### To Detect and track players in your tennis videos.")
 
 # Upload video file
 uploaded_video = st.file_uploader("Upload your video file (MP4, AVI, MOV)", type=["mp4", "avi", "mov"])
