@@ -31,13 +31,14 @@ Note: Make sure the best.pt model file is in the app directory.
 
 # Main app interface
 st.title("🎾 Tennis Tracking App")
-st.write("Detect and track players in your tennis videos.")
+st.markdown("#### Detect and track players in your tennis videos.")
 
 # Upload video file
-uploaded_video = st.file_uploader("Upload your video file", type=["mp4", "avi", "mov"])
+uploaded_video = st.file_uploader("Upload your video file (MP4, AVI, MOV)", type=["mp4", "avi", "mov"])
 
 if uploaded_video:
-    # Save uploaded video to a temporary file
+    # Show user that video is uploading
+    st.write("Uploading video...")
     with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_video:
         temp_video.write(uploaded_video.read())
         temp_video_path = temp_video.name
@@ -61,7 +62,8 @@ if uploaded_video:
     stframe = st.empty()
     frame_count = 0
 
-    st.write("Processing video...")
+    # Show processing message
+    st.write("Processing video... Please wait.")
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -75,20 +77,23 @@ if uploaded_video:
         # Write the processed frame to the output video
         out.write(processed_frame)
 
-        # Display the processed frame
+        # Display the processed frame in the Streamlit app
         stframe.image(cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB), channels="RGB")
 
-        # Update progress bar
+        # Update progress bar and percentage
         frame_count += 1
-        progress_bar.progress(frame_count / total_frames)
+        progress = frame_count / total_frames
+        progress_bar.progress(progress)
+        st.write(f"Processing... {int(progress * 100)}%")
 
     # Release video resources
     cap.release()
     out.release()
 
+    # Notify user of completion
     st.success("✅ Processing complete! Download your video below.")
 
-    # Add download button
+    # Add download button for processed video
     with open(output_video_path, 'rb') as file:
         st.download_button(
             label="⬇ Download Processed Video",
