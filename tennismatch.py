@@ -6,7 +6,7 @@ import numpy as np
 import os
 
 # Paths
-repo_path = ‘.’
+repo_path = 'https://github.com/sahithibandaru23/infosys/blob/main/best.pt'
 model_path = 'best.pt'
 
 # Load the YOLOv5 model
