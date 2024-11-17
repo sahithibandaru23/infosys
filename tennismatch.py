@@ -22,15 +22,15 @@ model = load_model(model_path)
 # Sidebar instructions
 st.sidebar.title("How to Use")
 st.sidebar.info("""
-1. Upload a video (MP4, AVI, or MOV).  
-2. Wait for the app to process and track players.  
-3. Download the processed video.  
+1.Upload a video.  
+2.Wait for the app to process and track players and the ball.  
+3.Wait for the processing video. 
+4.Downoad the processed vedio.
 
-Note: Make sure the best.pt model file is in the app directory.
 """)
 
 # Main app interface
-st.title("🎾 Tennis Tracking App")
+st.title("🎾 Tennis Tracking 🎾")
 st.markdown("#### Detect and track players in your tennis videos.")
 
 # Upload video file
@@ -63,7 +63,7 @@ if uploaded_video:
     frame_count = 0
 
     # Show processing message
-    st.write("Processing video... Please wait.")
+    st.write("Processing video....")
 
     while cap.isOpened():
         ret, frame = cap.read()
