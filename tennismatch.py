@@ -5,53 +5,98 @@ import tempfile
 import numpy as np
 import os
 
-# Paths
-repo_path = 'https://github.com/sahithibandaru23/infosys/blob/main/best.pt'
+# Path to the YOLOv5 model
 model_path = 'best.pt'
 
 # Load the YOLOv5 model
-model = torch.hub.load(repo_path, 'custom', path=model_path, source='local')
+@st.cache_resource
+def load_model(model_path):
+    try:
+        return torch.hub.load('.', 'custom', path=model_path, source='local')
+    except Exception as e:
+        st.error(f"Error loading the model: {e}")
+        raise
 
-# Streamlit app UI
-st.title('Tennis Player Detection App')
-st.write('Upload a tennis video to detect players in real-time.')
+model = load_model(model_path)
 
-# File uploader for video input
-uploaded_video = st.file_uploader("Choose a video file...", type=["mp4", "avi", "mov"])
+# Sidebar instructions
+st.sidebar.title("How to Use")
+st.sidebar.info("""
+1. Upload a video (MP4, AVI, or MOV).  
+2. Wait for the app to process and track players.  
+3. Download the processed video.  
 
-if uploaded_video is not None:
-    # Save the uploaded video to a temporary file
-    temp_video = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
-    temp_video_path = temp_video.name
-    temp_video.write(uploaded_video.read())
-    temp_video.close()
+Note: Make sure the best.pt model file is in the app directory.
+""")
 
-    # Open video capture
+# Main app interface
+st.title("🎾 Tennis Tracking App")
+st.write("Detect and track players in your tennis videos.")
+
+# Upload video file
+uploaded_video = st.file_uploader("Upload your video file", type=["mp4", "avi", "mov"])
+
+if uploaded_video:
+    # Save uploaded video to a temporary file
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_video:
+        temp_video.write(uploaded_video.read())
+        temp_video_path = temp_video.name
+
+    # Open the video for reading
     cap = cv2.VideoCapture(temp_video_path)
+
+    # Prepare the output video
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_output:
+        output_video_path = temp_output.name
+
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    progress_bar = st.progress(0)
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_video_path, fourcc, fps, (width, height))
+
     stframe = st.empty()
+    frame_count = 0
+
+    st.write("Processing video...")
 
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
 
-        # Perform detection
+        # Run detection
         results = model(frame)
-        frame = np.squeeze(results.render())  # Draw the detection boxes on the frame
+        processed_frame = np.squeeze(results.render())
 
-        # Convert BGR to RGB for display
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Write the processed frame to the output video
+        out.write(processed_frame)
 
-        # Display the frame in Streamlit
-        stframe.image(frame, channels='RGB', use_column_width=True)
+        # Display the processed frame
+        stframe.image(cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB), channels="RGB")
 
-        # Limit frame rate
-        time.sleep(0.03)
+        # Update progress bar
+        frame_count += 1
+        progress_bar.progress(frame_count / total_frames)
 
+    # Release video resources
     cap.release()
-    st.success('Video processing complete!')
+    out.release()
 
-    # Cleanup
-    os.unlink(temp_video_path)
+    st.success("✅ Processing complete! Download your video below.")
 
-st.write("Ensure 'best.pt' is in the same directory or provide the correct path in ⁠model_path⁠.")
+    # Add download button
+    with open(output_video_path, 'rb') as file:
+        st.download_button(
+            label="⬇ Download Processed Video",
+            data=file,
+            file_name="processed_tennis_video.mp4",
+            mime="video/mp4"
+        )
+
+    # Clean up temporary files
+    os.remove(temp_video_path)
+    os.remove(output_video_path)
