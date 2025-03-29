@@ -25,7 +25,7 @@ st.sidebar.info("""
 1.Upload a video.  
 2.Wait for the app to process and track players and the ball.  
 3.Wait for the processing video. 
-4.Downoad the processed vedio.
+4.Download the processed vedio.
 
 """)
 
